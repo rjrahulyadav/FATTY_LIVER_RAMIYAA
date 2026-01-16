@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fatty Liver Detector - AI Ultrasound Analysis by Ramiyaa S</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .upload-area p {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .image-preview {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-clear {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-clear:hover {
+            background: #d0d0d0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result {
+            display: none;
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .prediction-box {
+            background: white;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .prediction-title {
+            font-size: 14px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .prediction-class {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .confidence-bar {
+            background: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .confidence-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .confidence-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .severity {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .severity.normal {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .severity.abnormal {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .probabilities {
+            margin-top: 20px;
+        }
+        
+        .probabilities h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .prob-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .prob-label {
+            color: #666;
+            font-weight: 500;
+            width: 100px;
+        }
+        
+        .prob-bar {
+            flex: 1;
+            background: #e0e0e0;
+            height: 6px;
+            border-radius: 3px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        
+        .prob-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 3px;
+        }
+        
+        .prob-value {
+            color: #667eea;
+            font-weight: bold;
+            width: 50px;
+            text-align: right;
+        }
+        
+        .footer-info {
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Fatty Liver Detector</h1>
+            <p>AI-Powered Ultrasound Analysis using Siamese Neural Networks</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📸</div>
+                <h3>Upload Your Ultrasound Image</h3>
+                <p>Drag and drop your image here or click to browse</p>
+                <p style="font-size: 12px; margin-top: 10px;">Supported: JPG, PNG, BMP (Max 16MB)</p>
+                <input type="file" id="fileInput" accept="image/jpeg,image/png,image/bmp" />
+            </div>
+            
+            <div class="image-preview" id="imagePreview" style="display: none;">
+                <img id="previewImg" src="" alt="Preview">
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-upload" id="uploadBtn" style="display: none;">Analyze Image</button>
+                <button class="btn-clear" id="clearBtn" style="display: none;">Clear</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing image...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            
+            <div class="result" id="result">
+                <div class="prediction-box">
+                    <div class="prediction-title">Prediction</div>
+                    <div class="prediction-class" id="predictionClass">-</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                    </div>
+                    <div class="confidence-text">
+                        Confidence: <span id="confidence">0</span>%
+                    </div>
+                    <div class="description" id="description"></div>
+                    <div class="severity" id="severity"></div>
+                </div>
+                
+                <div class="probabilities">
+                    <h4>Probability Distribution</h4>
+                    <div id="probabilities"></div>
+                </div>
+                
+                <div class="footer-info">
+                    <p>Processing Time: <span id="processingTime">0</span>s</p>
+                    <p>⚠️ This tool is for educational purposes. Always consult with a medical professional.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        
+        let selectedFile = null;
+        
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file');
+                return;
+            }
+            
+            selectedFile = file;
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                uploadArea.style.display = 'none';
+                uploadBtn.style.display = 'block';
+                clearBtn.style.display = 'block';
+                result.classList.remove('show');
+                error.classList.remove('show');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        uploadBtn.addEventListener('click', uploadImage);
+        clearBtn.addEventListener('click', clearUpload);
+        
+        function clearUpload() {
+            selectedFile = null;
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            uploadArea.style.display = 'block';
+            uploadBtn.style.display = 'none';
+            clearBtn.style.display = 'none';
+            result.classList.remove('show');
+            error.classList.remove('show');
+        }
+        
+        function uploadImage() {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            loading.style.display = 'block';
+            result.classList.remove('show');
+            error.classList.remove('show');
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayResult(data);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                showError('Error: ' + err.message);
+            });
+        }
+        
+        function displayResult(data) {
+            document.getElementById('predictionClass').textContent = data.prediction;
+            document.getElementById('confidence').textContent = data.confidence;
+            document.getElementById('confidenceFill').style.width = data.confidence + '%';
+            document.getElementById('description').textContent = data.description;
+            document.getElementById('processingTime').textContent = data.processing_time;
+            
+            const severity = document.getElementById('severity');
+            severity.textContent = data.severity;
+            severity.className = 'severity ' + (data.prediction === 'Normal' ? 'normal' : 'abnormal');
+            
+            // Probabilities
+            const probsDiv = document.getElementById('probabilities');
+            probsDiv.innerHTML = '';
+            
+            for (const [className, prob] of Object.entries(data.probabilities)) {
+                const probItem = document.createElement('div');
+                probItem.className = 'prob-item';
+                probItem.innerHTML = `
+                    <div class="prob-label">${className}</div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" style="width: ${prob}%"></div>
+                    </div>
+                    <div class="prob-value">${prob}%</div>
+                `;
+                probsDiv.appendChild(probItem);
+            }
+            
+            result.classList.add('show');
+        }
+        
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('show');
+        }
+    </script>
+</body>
+</html>
