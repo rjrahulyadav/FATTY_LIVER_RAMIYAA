@@ -92,22 +92,46 @@ class FattyLiverDataset(Dataset):
         return image, label
 
 def get_data_transforms(is_train=True):
+    """
+    Enhanced transforms optimized for ultrasound medical imaging
+    """
     if is_train:
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
-            transforms.RandomRotation(20),
-            transforms.RandomAffine(degrees=0, shear=10, scale=(0.8, 1.2)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+            # Gentle augmentation for medical images
+            transforms.RandomRotation(15),  # Reduced rotation
+            transforms.RandomAffine(
+                degrees=0, 
+                shear=5,  # Reduced shear
+                scale=(0.9, 1.1),  # Conservative scaling
+                translate=(0.05, 0.05)
+            ),
+            transforms.RandomHorizontalFlip(p=0.3),
+            transforms.RandomVerticalFlip(p=0.3),
+            # Reduced color jitter for grayscale-like medical images
+            transforms.ColorJitter(
+                brightness=0.15,
+                contrast=0.15,
+                saturation=0.05,
+                hue=0.02
+            ),
+            # Gaussian blur for smoother augmentation
+            transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 0.3)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            # Standard ImageNet normalization
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
         ])
     else:
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
         ])
     
     return transform
